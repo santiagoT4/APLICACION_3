@@ -151,7 +151,7 @@
 
   // ==================== COMUNICACIÓN CON APPS SCRIPT ====================
 
-   // ===== Para LEER datos (GET) =====
+  // ===== Para LEER datos (GET) =====
   function callAppScriptGET(action) {
     return new Promise((resolve, reject) => {
       fetch(URL_APPSCRIPT + '?action=' + action, {
@@ -177,18 +177,18 @@
       });
     });
   }
-
+  
   // ===== Para ESCRIBIR datos (POST) - CORREGIDO =====
   function callAppScriptPOST(action, payload = {}) {
     return new Promise((resolve, reject) => {
       const body = JSON.stringify({ action, payload });
       
-      // ⚠️ CRUCIAL: Usar mode: 'cors' y enviar JSON
+      // ⚠️ CRUCIAL: Usar mode: 'cors' y Content-Type: 'text/plain'
       fetch(URL_APPSCRIPT, {
         method: 'POST',
-        mode: 'cors',  // ← CORREGIDO: Ahora podemos leer la respuesta
+        mode: 'cors',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'text/plain'  // ← EVITA EL PREFLIGHT (OPTIONS)
         },
         body: body
       })
