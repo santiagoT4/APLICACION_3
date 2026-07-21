@@ -150,7 +150,7 @@
   const SYNC_INTERVAL_MS = 60000; // 60 segundos
 
   // ==================== COMUNICACIÓN CON APPS SCRIPT ====================
-
+  
   // ===== Para LEER datos (GET) =====
   function callAppScriptGET(action) {
     return new Promise((resolve, reject) => {
@@ -162,9 +162,19 @@
         if (!response.ok) {
           throw new Error('Error HTTP: ' + response.status);
         }
-        return response.json();
+        return response.text();  // ← LEER COMO TEXTO
       })
-      .then(data => {
+      .then(text => {
+        console.log('📥 Recibido (GET):', text);
+        
+        // TRADUCIR DE TEXTO A OBJETO
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          throw new Error('La respuesta no es JSON válido: ' + text.substring(0, 100));
+        }
+        
         if (data.success) {
           resolve(data.data);
         } else {
@@ -172,33 +182,51 @@
         }
       })
       .catch(error => {
-        console.error('Error en callAppScriptGET:', error);
+        console.error('❌ Error en callAppScriptGET:', error);
         reject(error);
       });
     });
   }
   
-  // ===== Para ESCRIBIR datos (POST) - CORREGIDO =====
+  // ===== Para ESCRIBIR datos (POST) =====
   function callAppScriptPOST(action, payload = {}) {
     return new Promise((resolve, reject) => {
-      const body = JSON.stringify({ action, payload });
+      // ===== PASO 1: CONSTRUIR OBJETO =====
+      const objeto = { action, payload };
       
-      // ⚠️ CRUCIAL: Usar mode: 'cors' y Content-Type: 'text/plain'
+      // ===== PASO 2: TRADUCIR A TEXTO PLANO =====
+      const body = JSON.stringify(objeto);
+      
+      console.log('📤 Enviando:', body);
+      
+      // ===== PASO 3: ENVIAR POR EL CANAL (TEXTO PLANO) =====
       fetch(URL_APPSCRIPT, {
         method: 'POST',
         mode: 'cors',
         headers: {
-          'Content-Type': 'text/plain'  // ← EVITA EL PREFLIGHT (OPTIONS)
+          'Content-Type': 'text/plain'  // ← CLAVE: formato neutro
         },
-        body: body
+        body: body  // ← Texto plano
       })
       .then(response => {
+        console.log('📡 Status:', response.status);
         if (!response.ok) {
           throw new Error('Error HTTP: ' + response.status);
         }
-        return response.json();
+        return response.text();  // ← LEER COMO TEXTO
       })
-      .then(data => {
+      .then(text => {
+        console.log('📥 Recibido:', text);
+        
+        // ===== PASO 4: TRADUCIR DE TEXTO A OBJETO =====
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (error) {
+          throw new Error('La respuesta no es JSON válido: ' + text.substring(0, 100));
+        }
+        
+        // ===== PASO 5: VERIFICAR RESPUESTA =====
         if (data.success) {
           resolve(data.data);
         } else {
@@ -206,12 +234,12 @@
         }
       })
       .catch(error => {
-        console.error('Error en callAppScriptPOST:', error);
+        console.error('❌ Error en callAppScriptPOST:', error);
         reject(error);
       });
     });
   }
-
+  
   // ==================== ESTADO ====================
   let state = {
     user: null,
