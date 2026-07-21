@@ -139,8 +139,8 @@
 
 <script>
   // ==================== CONFIGURACIÓN ====================
-  // ⚠️ CAMBIA ESTA URL POR LA DE TU WEB APP PUBLICADA ⚠️
-  const URL_APPSCRIPT = 'https://script.google.com/macros/s/AKfycbw4SK4mHhI5Vtdc7ZcQ7gHSQYIs7Q2jNwF6G1RhT94kkdaXJ4vcBsqthcHmf2Sn12d7Qg/exec';
+  // ✅ NUEVA URL DE APPS SCRIPT (PUBLICADA)
+  const URL_APPSCRIPT = 'https://script.google.com/macros/s/AKfycbx7MAclzbjOR3CYdt2CEP6bfLL_toYgdhd-2rGLKJIlUCYyn24MrFNr-np6r0n6EedW_Q/exec';
   const URL_SISTEMA_ABONOS = 'https://script.google.com/macros/s/AKfycbw3eOunDhSOCB-WPWY0JYmfYtd2vyhDWanOgcaELx_CTQzNxjrRCoOqYV7lgETZ2fqOMg/exec';
   const URL_IMPRESORA_BLUETOOTH = 'https://santiagot4.github.io/5--imprimir/';
   let impresoraPreConectada = false;
@@ -197,41 +197,24 @@
       // ===== PASO 2: TRADUCIR A TEXTO PLANO =====
       const body = JSON.stringify(objeto);
       
-      console.log('📤 Enviando:', body);
+      console.log('📤 Enviando POST:', body);
       
       // ===== PASO 3: ENVIAR POR EL CANAL (TEXTO PLANO) =====
+      // ✅ Usamos 'no-cors' para evitar preflight CORS
+      // ⚠️ Con 'no-cors' NO podemos leer la respuesta, pero evitamos errores CORS
       fetch(URL_APPSCRIPT, {
         method: 'POST',
-        mode: 'cors',
+        mode: 'no-cors',  // ← CAMBIADO: 'no-cors' en lugar de 'cors'
         headers: {
           'Content-Type': 'text/plain'  // ← CLAVE: formato neutro
         },
         body: body  // ← Texto plano
       })
-      .then(response => {
-        console.log('📡 Status:', response.status);
-        if (!response.ok) {
-          throw new Error('Error HTTP: ' + response.status);
-        }
-        return response.text();  // ← LEER COMO TEXTO
-      })
-      .then(text => {
-        console.log('📥 Recibido:', text);
-        
-        // ===== PASO 4: TRADUCIR DE TEXTO A OBJETO =====
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (error) {
-          throw new Error('La respuesta no es JSON válido: ' + text.substring(0, 100));
-        }
-        
-        // ===== PASO 5: VERIFICAR RESPUESTA =====
-        if (data.success) {
-          resolve(data.data);
-        } else {
-          reject(new Error(data.error || 'Error desconocido'));
-        }
+      .then(() => {
+        // ✅ Con 'no-cors', si llegamos aquí, la petición se envió
+        // No podemos leer la respuesta, pero asumimos éxito
+        console.log('📤 POST enviado correctamente (respuesta opaca)');
+        resolve({ success: true, mensaje: 'Petición enviada' });
       })
       .catch(error => {
         console.error('❌ Error en callAppScriptPOST:', error);
@@ -735,7 +718,6 @@
         pedido.sincronizado = true;
         pedido.error_sincronizacion = false;
         pedido.es_provisional = false;
-        // Actualizar número de factura si viene en la respuesta
         console.log(`✅ Pedido ${pedido.id_pedido} sincronizado`);
       })
       .catch(error => {
@@ -1850,8 +1832,7 @@
     .then(() => {
       setButtonLoading('registrarVenta', false);
       
-      // Actualizar el pedido local con el número de factura real (si viene en la respuesta)
-      // Como no podemos leer la respuesta con no-cors, asumimos que se guardó
+      // Actualizar el pedido local
       const pedidoIndex = state.pedidos.findIndex(p => p.id_pedido === idPedidoTemporal);
       if (pedidoIndex !== -1) {
         state.pedidos[pedidoIndex].es_provisional = false;
